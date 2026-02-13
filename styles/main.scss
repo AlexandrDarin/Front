@@ -1,0 +1,402 @@
+// =========================================
+// ПОДКЛЮЧАЕМ МОДУЛЬ COLOR
+// =========================================
+@use 'sass:color';
+
+// =========================================
+// ПЕРЕМЕННЫЕ ДЛЯ ТЕМ
+// =========================================
+
+// Светлая тема (алый неон)
+$light-bg: #f0f2f5;
+$light-card-bg: #ffffff;
+$light-text: #2c3e50;
+$light-text-secondary: #5d6d7e;
+$light-neon: #ff3366;  // Алый неон
+$light-neon-glow: 0 0 20px rgba(255, 51, 102, 0.7),
+                  0 0 40px rgba(255, 51, 102, 0.5),
+                  0 0 60px rgba(255, 51, 102, 0.3);
+
+// Темная тема (белый неон)
+$dark-bg: #1a1a2e;
+$dark-card-bg: #16213e;
+$dark-text: #ffffff;
+$dark-text-secondary: #b8b8b8;
+$dark-neon: #ffffff;  // Белый неон
+$dark-neon-glow: 0 0 20px rgba(255, 255, 255, 0.7),
+                 0 0 40px rgba(255, 255, 255, 0.5),
+                 0 0 60px rgba(255, 255, 255, 0.3);
+
+// Общие переменные
+$border-radius: 16px;
+$transition-speed: 0.3s;
+
+// =========================================
+// МИКСИНЫ
+// =========================================
+
+// Миксин для неонового свечения
+@mixin neon-effect($color, $intensity: 'medium') {
+    $glow: null;
+    
+    @if $intensity == 'low' {
+        $glow: 0 0 10px $color, 0 0 20px $color;
+    } @else if $intensity == 'medium' {
+        $glow: 0 0 20px $color, 0 0 40px $color, 0 0 60px $color;
+    } @else if $intensity == 'high' {
+        $glow: 0 0 30px $color, 0 0 60px $color, 0 0 90px $color, 0 0 120px $color;
+    }
+    
+    box-shadow: $glow;
+}
+
+// Миксин для карточки с неоном
+@mixin neon-card($neon-color, $neon-glow) {
+    position: relative;
+    overflow: hidden;
+    transition: all $transition-speed ease;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, $neon-color, transparent 40%);
+        border-radius: $border-radius + 2px;
+        opacity: 0;
+        transition: opacity $transition-speed ease;
+        z-index: -1;
+    }
+    
+    &:hover {
+        transform: translateY(-5px);
+        
+        &::before {
+            opacity: 0.3;
+        }
+    }
+    
+    // Элемент для неонового свечения
+    .product-card__glow {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: $border-radius;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity $transition-speed ease;
+        box-shadow: $neon-glow;
+    }
+    
+    &:hover .product-card__glow {
+        opacity: 1;
+    }
+}
+
+// =========================================
+// БАЗОВЫЕ СТИЛИ
+// =========================================
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: background-color $transition-speed ease;
+}
+
+.container {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+// =========================================
+// ПЕРЕКЛЮЧАТЕЛЬ ТЕМ
+// =========================================
+
+.theme-switcher {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    
+    &__btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 40px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all $transition-speed ease;
+        
+        &--light {
+            background: #ff3366;
+            color: white;
+            
+            &:hover {
+                background: color.scale(#ff3366, $lightness: -10%);
+                transform: scale(1.05);
+            }
+        }
+        
+        &--dark {
+            background: #2c3e50;
+            color: white;
+            
+            &:hover {
+                background: color.scale(#2c3e50, $lightness: 10%);
+                transform: scale(1.05);
+            }
+        }
+        
+        &.active {
+            box-shadow: 0 0 20px currentColor;
+        }
+    }
+}
+
+// =========================================
+// СВЕТЛАЯ ТЕМА (по умолчанию)
+// =========================================
+
+body.theme-light {
+    background: linear-gradient(135deg, #f0f2f5 0%, #e0e5ec 100%);
+    
+    .product-card {
+        background: $light-card-bg;
+        color: $light-text;
+        
+        @include neon-card($light-neon, $light-neon-glow);
+        
+        &__title {
+            span {
+                color: $light-neon;
+                text-shadow: 0 0 10px rgba($light-neon, 0.5);
+            }
+        }
+        
+        &__description {
+            color: $light-text-secondary;
+        }
+        
+        &__button {
+            background: linear-gradient(45deg, $light-neon, color.scale($light-neon, $lightness: 10%));
+            
+            &:hover {
+                @include neon-effect($light-neon, 'medium');
+                background: linear-gradient(45deg, color.scale($light-neon, $lightness: -5%), $light-neon);
+            }
+            
+            &--secondary {
+                background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+                
+                &:hover {
+                    @include neon-effect(#00d2ff, 'medium');
+                }
+            }
+        }
+    }
+    
+    .theme-switcher__btn--light {
+        background: $light-neon;
+        box-shadow: 0 0 15px rgba($light-neon, 0.5);
+    }
+}
+
+// =========================================
+// ТЕМНАЯ ТЕМА
+// =========================================
+
+body.theme-dark {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    
+    .product-card {
+        background: $dark-card-bg;
+        color: $dark-text;
+        
+        @include neon-card($dark-neon, $dark-neon-glow);
+        
+        &__title {
+            span {
+                color: $dark-neon;
+                text-shadow: 0 0 10px rgba($dark-neon, 0.7);
+            }
+        }
+        
+        &__description {
+            color: $dark-text-secondary;
+        }
+        
+        &__button {
+            background: linear-gradient(45deg, #4a00e0, #8e2de2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            
+            &:hover {
+                @include neon-effect(#8e2de2, 'medium');
+                background: linear-gradient(45deg, #8e2de2, #4a00e0);
+            }
+            
+            &--secondary {
+                background: linear-gradient(45deg, #00b09b, #96c93d);
+                
+                &:hover {
+                    @include neon-effect(#00b09b, 'medium');
+                }
+            }
+        }
+    }
+    
+    .theme-switcher__btn--dark {
+        background: $dark-neon;
+        color: #1a1a2e;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+    }
+}
+
+// =========================================
+// СТИЛИ КАРТОЧКИ (общие для обеих тем)
+// =========================================
+
+.product-card {
+    width: 320px;
+    border-radius: $border-radius;
+    overflow: hidden;
+    position: relative;
+    transition: all $transition-speed ease;
+    
+    &__image {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        display: block;
+        transition: transform $transition-speed ease;
+    }
+    
+    &__content {
+        padding: 25px;
+    }
+    
+    &__title {
+        margin: 0 0 10px 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1.3;
+        
+        span {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-top: 5px;
+            transition: all $transition-speed ease;
+        }
+    }
+    
+    &__description {
+        margin: 0 0 20px 0;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    &__button {
+        border: none;
+        padding: 14px 20px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        color: white;
+        transition: all $transition-speed ease;
+        position: relative;
+        z-index: 1;
+        
+        &:active {
+            transform: scale(0.98);
+        }
+    }
+    
+    // Анимация для изображения при наведении
+    &:hover &__image {
+        transform: scale(1.05);
+    }
+}
+
+// =========================================
+// АНИМАЦИИ
+// =========================================
+
+@keyframes neonPulse {
+    0% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.5;
+    }
+}
+
+// Применяем анимацию к активным элементам
+.theme-light .product-card:hover .product-card__title span,
+.theme-dark .product-card:hover .product-card__title span {
+    animation: neonPulse 2s infinite;
+}
+
+// =========================================
+// МЕДИА-ЗАПРОСЫ
+// =========================================
+
+@media (max-width: 768px) {
+    .container {
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .product-card {
+        width: 100%;
+        max-width: 350px;
+        
+        &__image {
+            height: 180px;
+        }
+        
+        &__content {
+            padding: 20px;
+        }
+        
+        &__title {
+            font-size: 1.3rem;
+        }
+    }
+    
+    .theme-switcher {
+        flex-direction: column;
+        border-radius: 30px;
+        
+        &__btn {
+            width: 100%;
+        }
+    }
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карточки товаров с неоновыми темами</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-switcher">
+        <button class="theme-switcher__btn theme-switcher__btn--light active" data-theme="light">☀️ Светлая</button>
+        <button class="theme-switcher__btn theme-switcher__btn--dark" data-theme="dark">🌙 Темная</button>
+    </div>
+
+    <div class="container">
+        <!-- Карточка 1: Наушники Bose -->
+        <div class="product-card">
+            <div class="product-card__glow"></div> <!-- Элемент для неонового свечения -->
+            <img class="product-card__image" src="images/product2.jpg">
+            <div class="product-card__content">
+                <h3 class="product-card__title">Наушники Bose <span>QuietComfort</span></h3>
+                <p class="product-card__description">Беспроводные наушники с шумоподавлением, до 20 часов работы, мягкие амбуциоры</p>
+                <button class="product-card__button">В корзину</button>
+            </div>
+        </div>
+
+        <!-- Карточка 2: Смартфон Samsung -->
+        <div class="product-card">
+            <div class="product-card__glow"></div> <!-- Элемент для неонового свечения -->
+            <img class="product-card__image" src="images/product.jpg" alt="Смартфон Samsung">
+            <div class="product-card__content">
+                <h3 class="product-card__title">Смартфон <span>Samsung Galaxy</span></h3>
+                <p class="product-card__description">6.5-дюймовый экран, тройная камера 50 Мп, батарея 5000 мАч</p>
+                <button class="product-card__button product-card__button--secondary">Купить сейчас</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрипт для переключения темы -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeBtns = document.querySelectorAll('.theme-switcher__btn');
+            const body = document.body;
+            
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Убираем активный класс у всех кнопок
+                    themeBtns.forEach(b => b.classList.remove('active'));
+                    // Добавляем активный класс текущей кнопке
+                    this.classList.add('active');
+                    
+                    // Получаем выбранную тему
+                    const theme = this.dataset.theme;
+                    
+                    // Удаляем старую тему и добавляем новую
+                    body.classList.remove('theme-light', 'theme-dark');
+                    body.classList.add(`theme-${theme}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
