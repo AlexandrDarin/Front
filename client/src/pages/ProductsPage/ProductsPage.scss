@@ -1,0 +1,1217 @@
+    // =========================================
+// ПРЕМИАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// =========================================
+
+// Светлая тема
+$light-bg: #f5f7fa;
+$light-surface: #ffffff;
+$light-text: #1a1f36;
+$light-text-secondary: #4a5568;
+$light-border: #e2e8f0;
+$light-primary: #4361ee;
+$light-primary-glow: rgba(67, 97, 238, 0.3);
+$light-success: #10b981;
+$light-danger: #ef4444;
+$light-warning: #f59e0b;
+$light-card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+
+// Темная тема
+$dark-bg: #0a0c10;
+$dark-surface: #111827;
+$dark-text: #f3f4f6;
+$dark-text-secondary: #9ca3af;
+$dark-border: #1f2937;
+$dark-primary: #60a5fa;
+$dark-primary-glow: rgba(96, 165, 250, 0.3);
+$dark-success: #34d399;
+$dark-danger: #f87171;
+$dark-warning: #fbbf24;
+$dark-card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+
+// Неоновые цвета
+$neon-blue: #4361ee;
+$neon-purple: #8b5cf6;
+$neon-pink: #ec4899;
+$neon-cyan: #06b6d4;
+$neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+
+// =========================================
+// МИКСИНЫ
+// =========================================
+
+@mixin theme-aware($property, $light-value, $dark-value) {
+  #{$property}: $light-value;
+  
+  [data-theme="dark"] & {
+    #{$property}: $dark-value;
+  }
+}
+
+@mixin neon-effect($color, $opacity: 0.5) {
+  box-shadow: 
+    0 0 10px rgba($color, $opacity),
+    0 0 20px rgba($color, $opacity * 0.7),
+    0 0 30px rgba($color, $opacity * 0.5);
+}
+
+@mixin glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+// =========================================
+// ГЛОБАЛЬНЫЕ СТИЛИ
+// =========================================
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  @include theme-aware('background-color', $light-bg, $dark-bg);
+  @include theme-aware('color', $light-text, $dark-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+// =========================================
+// ХЕДЕР
+// =========================================
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  @include glass-effect;
+  border-bottom: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  
+  &__inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 800;
+  position: relative;
+  
+  &__icon {
+    font-size: 32px;
+    filter: drop-shadow(0 0 10px $neon-blue);
+  }
+  
+  &__text {
+    background: linear-gradient(135deg, $neon-blue, $neon-purple);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  &__badge {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, $neon-blue, $neon-purple);
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
+
+.search {
+  flex: 1;
+  max-width: 500px;
+  position: relative;
+  
+  &__input {
+    width: 100%;
+    padding: 14px 20px 14px 48px;
+    border-radius: 40px;
+    border: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    @include theme-aware('background', $light-surface, $dark-surface);
+    @include theme-aware('color', $light-text, $dark-text);
+    font-size: 15px;
+    transition: all 0.3s ease;
+    
+    &:focus {
+      outline: none;
+      @include theme-aware('border-color', $light-primary, $dark-primary);
+      box-shadow: 0 0 0 3px $light-primary-glow;
+    }
+    
+    &::placeholder {
+      @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    }
+  }
+  
+  &__btn {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 18px;
+    opacity: 0.6;
+    cursor: pointer;
+    @include theme-aware('color', $light-text, $dark-text);
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-switcher {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 40px;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+}
+
+.theme-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  @include theme-aware('background', transparent, transparent);
+  @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+  
+  &.active {
+    @include theme-aware('background', $light-primary, $dark-primary);
+    @include theme-aware('color', white, $dark-text);
+    transform: scale(1.1);
+  }
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.cart-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  @include theme-aware('background', $light-surface, $dark-surface);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &__icon {
+    font-size: 20px;
+  }
+  
+  &__badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, $neon-blue, $neon-purple);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    @include neon-effect($neon-blue);
+  }
+}
+
+// =========================================
+// ОСНОВНОЙ КОНТЕЙНЕР
+// =========================================
+
+.main {
+  min-height: calc(100vh - 80px);
+  padding: 40px 0;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+// =========================================
+// ХЛЕБНЫЕ КРОШКИ
+// =========================================
+
+.breadcrumbs {
+  margin-bottom: 24px;
+  font-size: 14px;
+  @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+  
+  .current {
+    @include theme-aware('color', $light-primary, $dark-primary);
+    font-weight: 600;
+  }
+}
+
+// =========================================
+// ТУЛБАР
+// =========================================
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  &__count {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 40px;
+    @include theme-aware('background', $light-surface, $dark-surface);
+    @include theme-aware('color', $light-primary, $dark-primary);
+    border: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+  }
+}
+
+// =========================================
+// КНОПКИ
+// =========================================
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  
+  &__icon {
+    font-size: 18px;
+  }
+  
+  &--primary {
+    @include theme-aware('background', $light-primary, $dark-primary);
+    @include theme-aware('color', white, $dark-text);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      @include neon-effect($neon-blue);
+      
+      &::before {
+        left: 100%;
+      }
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+  
+  &--outline {
+    @include theme-aware('background', transparent, transparent);
+    @include theme-aware('border', 1px solid $light-border, 1px solid $dark-border);
+    @include theme-aware('color', $light-text, $dark-text);
+    
+    &:hover {
+      @include theme-aware('border-color', $light-primary, $dark-primary);
+      @include neon-effect($neon-blue, 0.3);
+      transform: translateY(-2px);
+    }
+  }
+  
+  &--danger {
+    @include theme-aware('background', $light-danger, $dark-danger);
+    color: white;
+    
+    &:hover {
+      transform: translateY(-2px);
+      @include neon-effect($light-danger, 0.3);
+    }
+  }
+  
+  &--large {
+    padding: 14px 28px;
+    font-size: 16px;
+  }
+}
+
+// =========================================
+// ПАНЕЛЬ ФИЛЬТРОВ
+// =========================================
+
+.filters-panel {
+  margin-bottom: 40px;
+  padding: 20px;
+  border-radius: 16px;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.filters {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  min-width: 200px;
+  
+  &--checkbox {
+    min-width: auto;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.filter-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+}
+
+.filter-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  @include theme-aware('background', $light-bg, $dark-bg);
+  @include theme-aware('color', $light-text, $dark-text);
+  cursor: pointer;
+  outline: none;
+  
+  &:focus {
+    @include theme-aware('border-color', $light-primary, $dark-primary);
+  }
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  
+  input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  
+  &__text {
+    font-size: 14px;
+  }
+}
+
+.filters-reset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  @include theme-aware('background', transparent, transparent);
+  @include theme-aware('color', $light-text, $dark-text);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  .reset-icon {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover {
+    @include theme-aware('border-color', $light-primary, $dark-primary);
+    @include neon-effect($neon-blue, 0.3);
+    
+    .reset-icon {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// =========================================
+// СЕТКА ТОВАРОВ
+// =========================================
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+  margin-top: 20px;
+}
+
+// =========================================
+// КАРТОЧКА ТОВАРА
+// =========================================
+
+.product-card {
+  position: relative;
+  border-radius: 20px;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  &__glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: radial-gradient(circle at 50% 50%, rgba(67, 97, 238, 0.2), transparent 70%);
+  }
+  
+  &:hover {
+    transform: translateY(-8px) scale(1.02);
+    @include theme-aware('box-shadow', $light-card-shadow, $dark-card-shadow);
+    
+    .product-card__glow {
+      opacity: 1;
+    }
+    
+    .product-card__image img {
+      transform: scale(1.1);
+    }
+  }
+  
+  &__badges {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+  }
+  
+  .badge {
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    
+    &.in-stock {
+      background: $light-success;
+      color: white;
+    }
+    
+    &.out-stock {
+      background: $light-danger;
+      color: white;
+    }
+    
+    &.hit {
+      background: linear-gradient(135deg, $neon-blue, $neon-purple);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+  }
+  
+  &__image-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: 240px;
+  }
+  
+  &__image {
+    width: 100%;
+    height: 100%;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+  }
+  
+  &__content {
+    padding: 24px;
+  }
+  
+  &__category {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+  }
+  
+  &__title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  
+  &__description {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+  }
+  
+  &__rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    
+    .stars {
+      display: flex;
+      gap: 2px;
+      
+      .star {
+        color: #d1d5db;
+        font-size: 14px;
+        
+        &.filled {
+          color: #fbbf24;
+          text-shadow: 0 0 5px #fbbf24;
+        }
+      }
+    }
+    
+    .rating-value {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    
+    .rating-count {
+      font-size: 12px;
+      @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    }
+  }
+  
+  &__price-section {
+    margin-bottom: 20px;
+  }
+  
+  &__price {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, $neon-blue, $neon-purple);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+  }
+  
+  &__installment {
+    font-size: 13px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 8px;
+    
+    .btn {
+      flex: 1;
+      
+      &:first-child {
+        flex: 2;
+      }
+    }
+  }
+}
+
+// =========================================
+// КОРЗИНА
+// =========================================
+
+.cart-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.3s ease;
+}
+
+.cart {
+  width: 100%;
+  max-width: 450px;
+  height: 100vh;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  border-left: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+  
+  &__header {
+    padding: 24px;
+    border-bottom: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+  }
+  
+  &__close {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    background: none;
+    font-size: 24px;
+    cursor: pointer;
+    @include theme-aware('color', $light-text, $dark-text);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: rotate(90deg);
+      @include theme-aware('background', $light-primary, $dark-primary);
+      @include theme-aware('color', white, $dark-text);
+    }
+  }
+  
+  &__items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  
+  &__empty {
+    text-align: center;
+    padding: 60px 0;
+    
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    
+    p {
+      @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    }
+  }
+  
+  &__item {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    
+    &-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    
+    &-info {
+      flex: 1;
+      
+      h4 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      
+      p {
+        font-size: 13px;
+        @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+        margin-bottom: 4px;
+      }
+    }
+    
+    &-price {
+      font-weight: 700;
+      @include theme-aware('color', $light-primary, $dark-primary);
+    }
+    
+    &-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      button {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid;
+        @include theme-aware('border-color', $light-border, $dark-border);
+        background: none;
+        cursor: pointer;
+        @include theme-aware('color', $light-text, $dark-text);
+        transition: all 0.3s ease;
+        
+        &:hover {
+          @include theme-aware('background', $light-primary, $dark-primary);
+          @include theme-aware('color', white, $dark-text);
+        }
+        
+        &.remove:hover {
+          @include theme-aware('background', $light-danger, $dark-danger);
+        }
+      }
+      
+      span {
+        min-width: 30px;
+        text-align: center;
+        font-weight: 600;
+      }
+    }
+  }
+  
+  &__footer {
+    padding: 24px;
+    border-top: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+  }
+  
+  &__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    
+    .total-price {
+      font-size: 24px;
+      background: linear-gradient(135deg, $neon-blue, $neon-purple);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+}
+
+// =========================================
+// МОДАЛЬНОЕ ОКНО
+// =========================================
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 24px;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  border: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  animation: scaleIn 0.3s ease;
+  
+  &__header {
+    padding: 24px;
+    border-bottom: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    @include theme-aware('background', $light-surface, $dark-surface);
+    z-index: 10;
+    
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+  }
+  
+  &__close {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    background: none;
+    font-size: 24px;
+    cursor: pointer;
+    @include theme-aware('color', $light-text, $dark-text);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: rotate(90deg);
+      @include theme-aware('background', $light-primary, $dark-primary);
+      @include theme-aware('color', white, $dark-text);
+    }
+  }
+  
+  &__content {
+    padding: 24px;
+  }
+}
+
+// =========================================
+// ФОРМЫ
+// =========================================
+
+.form-group {
+  margin-bottom: 20px;
+  
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    @include theme-aware('color', $light-text, $dark-text);
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    @include theme-aware('background', $light-bg, $dark-bg);
+    @include theme-aware('color', $light-text, $dark-text);
+    font-size: 15px;
+    transition: all 0.3s ease;
+    
+    &:focus {
+      outline: none;
+      @include theme-aware('border-color', $light-primary, $dark-primary);
+      box-shadow: 0 0 0 3px $light-primary-glow;
+    }
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  
+  button {
+    flex: 1;
+    padding: 14px;
+  }
+}
+
+// =========================================
+// ЗАГРУЗКА
+// =========================================
+
+.loading {
+  text-align: center;
+  padding: 80px 20px;
+  
+  &__spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    border: 3px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    border-top-color: $neon-blue;
+    border-right-color: $neon-purple;
+    border-bottom-color: $neon-pink;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  p {
+    font-size: 18px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    animation: pulse 2s infinite;
+  }
+}
+
+// =========================================
+// ПУСТОЕ СОСТОЯНИЕ
+// =========================================
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  
+  &__icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+    animation: bounce 2s infinite;
+  }
+  
+  h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  
+  p {
+    font-size: 16px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    margin-bottom: 24px;
+  }
+}
+
+// =========================================
+// ФУТЕР
+// =========================================
+
+.footer {
+  margin-top: 80px;
+  border-top: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  
+  &__inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 24px 30px;
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+  
+  &__col {
+    h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      @include theme-aware('color', $light-text, $dark-text);
+    }
+    
+    ul {
+      list-style: none;
+      
+      li {
+        margin-bottom: 12px;
+        font-size: 14px;
+        @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          @include theme-aware('color', $light-primary, $dark-primary);
+          transform: translateX(5px);
+        }
+      }
+    }
+  }
+  
+  &__bottom {
+    text-align: center;
+    padding-top: 30px;
+    border-top: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    font-size: 13px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+  }
+}
+
+// =========================================
+// АНИМАЦИИ
+// =========================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+// =========================================
+// АДАПТИВНОСТЬ
+// =========================================
+
+@media (max-width: 768px) {
+  .header__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search {
+    max-width: none;
+  }
+  
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .filters-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .footer__grid {
+    grid-template-columns: 1fr;
+  }
+}
