@@ -1,0 +1,630 @@
+// =========================================
+// ПРЕМИАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// =========================================
+
+// Светлая тема
+$light-bg: #f8fafc;
+$light-surface: #ffffff;
+$light-text: #0f172a;
+$light-text-secondary: #475569;
+$light-border: rgba(0, 0, 0, 0.08);
+$light-primary: #4361ee;
+$light-primary-light: #e0e7ff;
+$light-secondary: #8b5cf6;
+$light-glow: rgba(67, 97, 238, 0.3);
+$light-card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1),
+                    0 10px 20px -10px rgba(0, 0, 0, 0.05);
+
+// Темная тема
+$dark-bg: #0a0c10;
+$dark-surface: #111827;
+$dark-text: #f3f4f6;
+$dark-text-secondary: #9ca3af;
+$dark-border: rgba(255, 255, 255, 0.08);
+$dark-primary: #60a5fa;
+$dark-primary-light: #1e293b;
+$dark-secondary: #a78bfa;
+$dark-glow: rgba(96, 165, 250, 0.3);
+$dark-card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5),
+                    0 10px 20px -10px rgba(0, 0, 0, 0.3);
+
+// Неоновые цвета
+$neon-blue: #4361ee;
+$neon-purple: #8b5cf6;
+$neon-pink: #ec4899;
+$neon-cyan: #06b6d4;
+$neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+
+// =========================================
+// МИКСИНЫ
+// =========================================
+
+@mixin theme-aware($property, $light-value, $dark-value) {
+  #{$property}: $light-value;
+  [data-theme="dark"] & {
+    #{$property}: $dark-value;
+  }
+}
+
+@mixin glass-effect {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@mixin gradient-border($color1, $color2) {
+  position: relative;
+  border: double 1px transparent;
+  border-radius: 16px;
+  background-image: linear-gradient(var(--bg), var(--bg)), 
+                    linear-gradient(135deg, $color1, $color2);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+@mixin neon-glow($color) {
+  box-shadow: 0 0 10px rgba($color, 0.3),
+              0 0 20px rgba($color, 0.2),
+              0 0 30px rgba($color, 0.1);
+}
+
+// =========================================
+// АНИМАЦИИ
+// =========================================
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  20% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// =========================================
+// ЛЕЙАУТ
+// =========================================
+
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  @include theme-aware('background-color', $light-bg, $dark-bg);
+  position: relative;
+  overflow-x: hidden;
+  
+  // Декоративные элементы
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 0% 0%, rgba($neon-blue, 0.05), transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba($neon-purple, 0.05), transparent 50%);
+    z-index: 0;
+  }
+}
+
+// =========================================
+// ПРЕМИАЛЬНЫЙ ХЕДЕР
+// =========================================
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  @include glass-effect;
+  @include theme-aware('border-bottom', 1px solid $light-border, 1px solid $dark-border);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, $neon-blue, $neon-purple, transparent);
+    animation: shine 3s infinite;
+    pointer-events: none;
+  }
+  
+  &__inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+}
+
+// Премиальный бренд
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  position: relative;
+  
+  &__icon {
+    font-size: 36px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px $neon-blue);
+  }
+  
+  &__text {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, $neon-blue, $neon-purple);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 5s ease infinite;
+  }
+  
+  &::after {
+    content: 'PRO';
+    position: absolute;
+    top: -8px;
+    right: -30px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, $neon-blue, $neon-purple);
+    color: white;
+    letter-spacing: 0.5px;
+    animation: pulse 2s infinite;
+  }
+}
+
+// Премиальная навигация
+.nav {
+  display: flex;
+  gap: 32px;
+  
+  &__link {
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    position: relative;
+    padding: 8px 0;
+    @include theme-aware('color', $light-text, $dark-text);
+    transition: all 0.3s ease;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, $neon-blue, $neon-purple);
+      transition: width 0.3s ease;
+    }
+    
+    &:hover {
+      @include theme-aware('color', $light-primary, $dark-primary);
+      
+      &::before {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Премиальные кнопки действий
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  @include theme-aware('color', $light-text, $dark-text);
+  @include theme-aware('box-shadow', $light-card-shadow, $dark-card-shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba($neon-blue, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+  }
+  
+  &:hover {
+    transform: rotate(180deg) scale(1.1);
+    @include neon-glow($neon-blue);
+    
+    &::before {
+      width: 100px;
+      height: 100px;
+    }
+  }
+}
+
+.user-name {
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 40px;
+  @include theme-aware('background', $light-primary-light, $dark-primary-light);
+  @include theme-aware('color', $light-primary, $dark-primary);
+  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: rotate(45deg);
+    animation: shimmer 3s infinite;
+  }
+}
+
+.cart-btn, .logout-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  @include theme-aware('color', $light-text, $dark-text);
+  @include theme-aware('box-shadow', $light-card-shadow, $dark-card-shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    @include neon-glow($neon-blue);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+}
+
+// =========================================
+// ПРЕМИАЛЬНЫЙ ФУТЕР
+// =========================================
+
+.footer {
+  margin-top: 80px;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  border-top: 1px solid;
+  @include theme-aware('border-color', $light-border, $dark-border);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, $neon-blue, $neon-purple, transparent);
+  }
+  
+  &__inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px 24px 40px;
+    position: relative;
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 60px;
+    margin-bottom: 60px;
+  }
+  
+  &__col {
+    h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      position: relative;
+      display: inline-block;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 40px;
+        height: 3px;
+        background: linear-gradient(90deg, $neon-blue, $neon-purple);
+        border-radius: 3px;
+      }
+    }
+    
+    ul {
+      list-style: none;
+      padding: 0;
+      
+      li {
+        margin-bottom: 16px;
+        @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        padding-left: 20px;
+        
+        &::before {
+          content: '→';
+          position: absolute;
+          left: 0;
+          opacity: 0;
+          transition: all 0.3s ease;
+          @include theme-aware('color', $light-primary, $dark-primary);
+        }
+        
+        &:hover {
+          transform: translateX(5px);
+          @include theme-aware('color', $light-primary, $dark-primary);
+          
+          &::before {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+  
+  &__bottom {
+    text-align: center;
+    padding-top: 40px;
+    border-top: 1px solid;
+    @include theme-aware('border-color', $light-border, $dark-border);
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    font-size: 14px;
+    position: relative;
+    
+    &::before {
+      content: '⚡';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      @include theme-aware('background', $light-surface, $dark-surface);
+      padding: 5px 20px;
+      border-radius: 30px;
+      @include theme-aware('color', $light-primary, $dark-primary);
+    }
+  }
+}
+
+// =========================================
+// ПРЕМИАЛЬНЫЕ ЗАГРУЗЧИКИ
+// =========================================
+
+.loading {
+  text-align: center;
+  padding: 100px 20px;
+  
+  &__spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    border: 3px solid transparent;
+    border-top-color: $neon-blue;
+    border-right-color: $neon-purple;
+    border-bottom-color: $neon-pink;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border: 3px solid transparent;
+      border-top-color: $neon-cyan;
+      border-radius: 50%;
+      animation: spin 1.5s linear reverse infinite;
+    }
+  }
+  
+  p {
+    font-size: 18px;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// =========================================
+// ПРЕМИАЛЬНЫЕ УВЕДОМЛЕНИЯ
+// =========================================
+
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  min-width: 300px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  @include glass-effect;
+  @include theme-aware('background', $light-surface, $dark-surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+  
+  &--success {
+    border-left: 4px solid #10b981;
+  }
+  
+  &--error {
+    border-left: 4px solid #ef4444;
+  }
+  
+  &--info {
+    border-left: 4px solid $neon-blue;
+  }
+  
+  &__icon {
+    font-size: 24px;
+  }
+  
+  &__content {
+    flex: 1;
+    
+    h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    p {
+      font-size: 14px;
+      @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    }
+  }
+  
+  &__close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    @include theme-aware('color', $light-text-secondary, $dark-text-secondary);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: rotate(90deg);
+      @include theme-aware('color', $light-primary, $dark-primary);
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// =========================================
+// АДАПТИВНОСТЬ
+// =========================================
+
+@media (max-width: 768px) {
+  .header__inner {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+  
+  .header__actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .footer__grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}

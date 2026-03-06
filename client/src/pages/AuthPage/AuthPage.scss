@@ -1,0 +1,91 @@
+.auth-page {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 450px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form {
+    &__title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        text-align: center;
+        color: #1a1f36;
+    }
+    
+    &__row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    &__error {
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    &__switch {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 14px;
+        color: #64748b;
+        
+        &-link {
+            background: none;
+            border: none;
+            color: #4361ee;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            
+            &:hover {
+                color: #3046c0;
+            }
+        }
+    }
+}
+
+// Темная тема
+[data-theme="dark"] {
+    .auth-card {
+        background: #1e293b;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .auth-form {
+        &__title {
+            color: #f3f4f6;
+        }
+        
+        &__switch {
+            color: #9ca3af;
+            
+            &-link {
+                color: #60a5fa;
+                
+                &:hover {
+                    color: #3b82f6;
+                }
+            }
+        }
+    }
+}
