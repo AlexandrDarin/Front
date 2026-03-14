@@ -4,19 +4,22 @@ const { nanoid } = require('nanoid');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser'); // Добавить эту строку
 
 // Подключаем Swagger
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
-const app = express();
+const app = express(); // Сначала создаем app
 const port = 3000;
 
 // =========================================
-// Константы
+// Константы для JWT
 // =========================================
-const JWT_SECRET = "techstore_super_secret_key_2026";
-const ACCESS_EXPIRES_IN = "15m";
+const ACCESS_SECRET = "techstore_access_secret_2026";
+const REFRESH_SECRET = "techstore_refresh_secret_2026";
+const ACCESS_EXPIRES_IN = "15m"; // 15 минут
+const REFRESH_EXPIRES_IN = "7d";  // 7 дней
 const SALT_ROUNDS = 10;
 
 // =========================================
@@ -24,11 +27,13 @@ const SALT_ROUNDS = 10;
 // =========================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Теперь здесь правильно
 
 // CORS для фронтенда на React
 app.use(cors({
   origin: "http://localhost:3001",
-  methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+  credentials: true, // Разрешаем передачу cookies
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
@@ -44,19 +49,37 @@ app.use((req, res, next) => {
 });
 
 // =========================================
-// Базы данных
+// Базы данных (в памяти)
 // =========================================
+
+// Пользователи: id, email, first_name, last_name, passwordHash, role, isActive, created_at
 let users = [
     {
         id: nanoid(6),
         email: 'admin@techstore.com',
         first_name: 'Admin',
         last_name: 'TechStore',
-        passwordHash: '$2b$10$XOM.rq1BHsQqWqWqWqWqWu', // password: admin123
+        passwordHash: '$2b$10$XOM.rq1BHsQqWqWqWqWqWu', // password: admin123 (заглушка)
+        role: 'admin',
+        isActive: true,
+        created_at: new Date().toISOString()
+    },
+    {
+        id: nanoid(6),
+        email: 'seller@techstore.com',
+        first_name: 'Seller',
+        last_name: 'TechStore',
+        passwordHash: '$2b$10$XOM.rq1BHsQqWqWqWqWqWu', // password: seller123 (заглушка)
+        role: 'seller',
+        isActive: true,
         created_at: new Date().toISOString()
     }
 ];
 
+// Хранилище refresh-токенов (в памяти)
+const refreshTokens = new Set();
+
+// Товары
 let products = [
     { 
         id: nanoid(6), 
@@ -66,7 +89,9 @@ let products = [
         price: 34990, 
         stock: 15,
         rating: 4.9,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7311182222.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7311182222.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -76,7 +101,9 @@ let products = [
         price: 129990, 
         stock: 8,
         rating: 4.8,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7326345678.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7326345678.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -86,7 +113,9 @@ let products = [
         price: 399990, 
         stock: 3,
         rating: 5.0,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7312345678.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7312345678.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -96,7 +125,9 @@ let products = [
         price: 159990, 
         stock: 7,
         rating: 4.9,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7323456789.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7323456789.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -106,7 +137,9 @@ let products = [
         price: 89990, 
         stock: 12,
         rating: 4.9,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7314567890.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7314567890.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -116,7 +149,9 @@ let products = [
         price: 54990, 
         stock: 5,
         rating: 4.9,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7325678901.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7325678901.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -126,7 +161,9 @@ let products = [
         price: 159990, 
         stock: 4,
         rating: 4.8,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7336789012.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7336789012.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -136,7 +173,9 @@ let products = [
         price: 89990, 
         stock: 6,
         rating: 4.8,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7317890123.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7317890123.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -146,7 +185,9 @@ let products = [
         price: 219990, 
         stock: 2,
         rating: 5.0,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7328901234.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7328901234.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     },
     { 
         id: nanoid(6), 
@@ -156,7 +197,9 @@ let products = [
         price: 15990, 
         stock: 11,
         rating: 4.7,
-        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7339012345.jpg'
+        image: 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7339012345.jpg',
+        createdBy: 'admin@techstore.com',
+        createdAt: new Date().toISOString()
     }
 ];
 
@@ -178,50 +221,21 @@ let products = [
  *       properties:
  *         id:
  *           type: string
- *           description: Уникальный идентификатор пользователя
  *         email:
  *           type: string
  *           format: email
- *           description: Email пользователя (логин)
  *         first_name:
  *           type: string
- *           description: Имя пользователя
  *         last_name:
  *           type: string
- *           description: Фамилия пользователя
+ *         role:
+ *           type: string
+ *           enum: [user, seller, admin]
+ *         isActive:
+ *           type: boolean
  *         created_at:
  *           type: string
  *           format: date-time
- *           description: Дата регистрации
- *       example:
- *         id: "abc123"
- *         email: "user@example.com"
- *         first_name: "Иван"
- *         last_name: "Петров"
- *         created_at: "2026-03-06T12:00:00Z"
- *     
- *     UserResponse:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         email:
- *           type: string
- *         first_name:
- *           type: string
- *         last_name:
- *           type: string
- *         created_at:
- *           type: string
- *     
- *     LoginResponse:
- *       type: object
- *       properties:
- *         accessToken:
- *           type: string
- *           description: JWT токен для доступа к защищенным маршрутам
- *         user:
- *           $ref: '#/components/schemas/UserResponse'
  *     
  *     Product:
  *       type: object
@@ -247,12 +261,22 @@ let products = [
  *         image:
  *           type: string
  *     
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         accessToken:
+ *           type: string
+ *         refreshToken:
+ *           type: string
+ *         user:
+ *           $ref: '#/components/schemas/User'
+ *     
  *     Error:
  *       type: object
  *       properties:
  *         error:
  *           type: string
- *     
+ * 
  *   securitySchemes:
  *     bearerAuth:
  *       type: http
@@ -261,20 +285,20 @@ let products = [
  * 
  * tags:
  *   - name: Auth
- *     description: Аутентификация и управление пользователями
+ *     description: Аутентификация
+ *   - name: Users
+ *     description: Управление пользователями (только админ)
  *   - name: Products
  *     description: Управление товарами
- *   - name: Categories
- *     description: Получение категорий
  */
 
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'TechStore API - С аутентификацией и JWT',
-            version: '2.0.0',
-            description: 'API интернет-магазина с полной системой аутентификации и JWT токенами',
+            title: 'TechStore API - Полная версия с RBAC',
+            version: '3.0.0',
+            description: 'API интернет-магазина с ролевой моделью доступа (user, seller, admin)',
         },
         servers: [
             {
@@ -298,41 +322,56 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // =========================================
 
 /**
- * Хеширование пароля с помощью bcrypt
+ * Хеширование пароля
  */
 async function hashPassword(password) {
     return bcrypt.hash(password, SALT_ROUNDS);
 }
 
 /**
- * Проверка пароля
+ * Генерация access-токена
  */
-async function verifyPassword(password, hash) {
-    return bcrypt.compare(password, hash);
+function generateAccessToken(user) {
+    return jwt.sign(
+        {
+            sub: user.id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            role: user.role
+        },
+        ACCESS_SECRET,
+        { expiresIn: ACCESS_EXPIRES_IN }
+    );
+}
+
+/**
+ * Генерация refresh-токена
+ */
+function generateRefreshToken(user) {
+    return jwt.sign(
+        {
+            sub: user.id,
+            email: user.email,
+            role: user.role
+        },
+        REFRESH_SECRET,
+        { expiresIn: REFRESH_EXPIRES_IN }
+    );
 }
 
 /**
  * Поиск пользователя по email
  */
-function findUserByEmail(email, res) {
-    const user = users.find(u => u.email === email);
-    if (!user) {
-        res?.status(404).json({ error: "Пользователь не найден" });
-        return null;
-    }
-    return user;
+function findUserByEmail(email) {
+    return users.find(u => u.email === email);
 }
 
 /**
  * Поиск пользователя по ID
  */
-function findUserById(id, res) {
-    const user = users.find(u => u.id === id);
-    if (!user) {
-        res?.status(404).json({ error: "Пользователь не найден" });
-        return null;
-    }
-    return user;
+function findUserById(id) {
+    return users.find(u => u.id === id);
 }
 
 /**
@@ -347,13 +386,16 @@ function findProductOr404(id, res) {
     return product;
 }
 
+// =========================================
+// Middleware для аутентификации и авторизации
+// =========================================
+
 /**
  * Middleware для проверки JWT токена
  */
 function authMiddleware(req, res, next) {
     const header = req.headers.authorization || "";
 
-    // Ожидаем формат: Bearer <token>
     const [scheme, token] = header.split(" ");
 
     if (scheme !== "Bearer" || !token) {
@@ -363,17 +405,34 @@ function authMiddleware(req, res, next) {
     }
 
     try {
-        const payload = jwt.verify(token, JWT_SECRET);
-        
-        // Сохраняем данные токена в req
-        req.user = payload; // { sub, email, first_name, last_name, iat, exp }
-        
+        const payload = jwt.verify(token, ACCESS_SECRET);
+        req.user = payload;
         next();
     } catch (err) {
         return res.status(401).json({
             error: "Недействительный или просроченный токен"
         });
     }
+}
+
+/**
+ * Middleware для проверки ролей
+ * @param {string[]} allowedRoles - Массив разрешенных ролей
+ */
+function roleMiddleware(allowedRoles) {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ error: "Не авторизован" });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ 
+                error: "Доступ запрещен. Недостаточно прав." 
+            });
+        }
+
+        next();
+    };
 }
 
 // =========================================
@@ -395,11 +454,17 @@ app.get('/', (req, res) => {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>TechStore API with Auth</title>
+            <title>TechStore API with RBAC</title>
             <style>
-                body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+                body { font-family: Arial; max-width: 1200px; margin: 50px auto; padding: 20px; }
                 h1 { color: #4361ee; }
                 .stats { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+                .roles { display: flex; gap: 20px; margin: 20px 0; }
+                .role-card { flex: 1; padding: 20px; border-radius: 8px; color: white; }
+                .guest { background: #6c757d; }
+                .user { background: #28a745; }
+                .seller { background: #ffc107; color: black; }
+                .admin { background: #dc3545; }
                 ul { list-style: none; padding: 0; }
                 li { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
                 a { color: #4361ee; text-decoration: none; }
@@ -408,27 +473,53 @@ app.get('/', (req, res) => {
             </style>
         </head>
         <body>
-            <h1>🛍️ TechStore API с аутентификацией</h1>
+            <h1>🛍️ TechStore API с ролевой моделью (RBAC)</h1>
             <div class="stats">
                 <p>👥 Пользователей: ${users.length}</p>
                 <p>📦 Товаров: ${products.length}</p>
-                <p>🔐 JWT Secret: ${JWT_SECRET.substring(0, 10)}...</p>
+                <p>🔐 Access Token: истекает через 15 минут</p>
+                <p>🔄 Refresh Token: истекает через 7 дней</p>
             </div>
+            
+            <h2>Роли пользователей:</h2>
+            <div class="roles">
+                <div class="role-card guest">👤 Гость<br><small>Только просмотр товаров</small></div>
+                <div class="role-card user">👤 Пользователь<br><small>Просмотр товаров</small></div>
+                <div class="role-card seller">👤 Продавец<br><small>Управление товарами</small></div>
+                <div class="role-card admin">👤 Администратор<br><small>Управление пользователями</small></div>
+            </div>
+            
             <p>📚 <a href="/api-docs">Swagger документация</a> <span class="badge">OpenAPI 3.0</span></p>
+            
             <h2>Доступные endpoints:</h2>
-            <h3>🔓 Публичные:</h3>
+            
+            <h3>🔓 Публичные (доступны всем):</h3>
             <ul>
                 <li><strong>POST</strong> /api/auth/register - регистрация</li>
-                <li><strong>POST</strong> /api/auth/login - вход (получение токена)</li>
-                <li><strong>GET</strong> /api/products - все товары (публично)</li>
-                <li><strong>GET</strong> /api/categories - все категории (публично)</li>
+                <li><strong>POST</strong> /api/auth/login - вход (получение токенов)</li>
+                <li><strong>POST</strong> /api/auth/refresh - обновление токенов</li>
+                <li><strong>GET</strong> /api/products - список товаров</li>
+                <li><strong>GET</strong> /api/categories - категории</li>
             </ul>
-            <h3>🔒 Защищенные (требуют Bearer токен):</h3>
+            
+            <h3>🔒 Защищенные (требуют аутентификации):</h3>
             <ul>
-                <li><strong>GET</strong> /api/auth/me - информация о текущем пользователе</li>
+                <li><strong>GET</strong> /api/auth/me - профиль (любой пользователь)</li>
+            </ul>
+            
+            <h3>👑 Продавец и админ (POST /api/products):</h3>
+            <ul>
                 <li><strong>POST</strong> /api/products - создать товар</li>
-                <li><strong>GET</strong> /api/products/:id - товар по ID</li>
-                <li><strong>PUT</strong> /api/products/:id - полностью обновить товар</li>
+                <li><strong>PUT</strong> /api/products/:id - обновить товар</li>
+                <li><strong>GET</strong> /api/products/:id - детали товара</li>
+            </ul>
+            
+            <h3>👑 Только администратор:</h3>
+            <ul>
+                <li><strong>GET</strong> /api/users - список пользователей</li>
+                <li><strong>GET</strong> /api/users/:id - пользователь по ID</li>
+                <li><strong>PUT</strong> /api/users/:id - обновить пользователя</li>
+                <li><strong>DELETE</strong> /api/users/:id - заблокировать пользователя</li>
                 <li><strong>DELETE</strong> /api/products/:id - удалить товар</li>
             </ul>
         </body>
@@ -456,25 +547,19 @@ app.get('/', (req, res) => {
  *             properties:
  *               email:
  *                 type: string
- *                 format: email
- *                 example: "ivan@example.com"
+ *                 example: user@example.com
  *               password:
  *                 type: string
- *                 format: password
- *                 example: "qwerty123"
+ *                 example: qwerty123
  *               first_name:
  *                 type: string
- *                 example: "Иван"
+ *                 example: Иван
  *               last_name:
  *                 type: string
- *                 example: "Петров"
+ *                 example: Петров
  *     responses:
  *       201:
- *         description: Пользователь успешно создан
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UserResponse'
+ *         description: Пользователь создан
  *       400:
  *         description: Ошибка валидации
  *       409:
@@ -483,51 +568,47 @@ app.get('/', (req, res) => {
 app.post("/api/auth/register", async (req, res) => {
     const { email, password, first_name, last_name } = req.body;
 
-    // Валидация
     if (!email || !password || !first_name || !last_name) {
         return res.status(400).json({ 
             error: "Все поля обязательны: email, password, first_name, last_name" 
         });
     }
 
-    // Проверка формата email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({ error: "Неверный формат email" });
     }
 
-    // Проверка длины пароля
     if (password.length < 6) {
         return res.status(400).json({ error: "Пароль должен быть минимум 6 символов" });
     }
 
-    // Проверка уникальности email
-    const existingUser = users.find(u => u.email === email);
+    const existingUser = findUserByEmail(email);
     if (existingUser) {
         return res.status(409).json({ error: "Пользователь с таким email уже существует" });
     }
 
-    // Хеширование пароля
     const passwordHash = await hashPassword(password);
 
-    // Создание пользователя
     const newUser = {
         id: nanoid(6),
         email,
         first_name: first_name.trim(),
         last_name: last_name.trim(),
         passwordHash,
+        role: 'user', // По умолчанию обычный пользователь
+        isActive: true,
         created_at: new Date().toISOString()
     };
 
     users.push(newUser);
 
-    // Не возвращаем passwordHash
     res.status(201).json({
         id: newUser.id,
         email: newUser.email,
         first_name: newUser.first_name,
         last_name: newUser.last_name,
+        role: newUser.role,
         created_at: newUser.created_at
     });
 });
@@ -536,7 +617,7 @@ app.post("/api/auth/register", async (req, res) => {
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Вход в систему (получение JWT токена)
+ *     summary: Вход в систему
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -550,19 +631,15 @@ app.post("/api/auth/register", async (req, res) => {
  *             properties:
  *               email:
  *                 type: string
- *                 example: "ivan@example.com"
  *               password:
  *                 type: string
- *                 example: "qwerty123"
  *     responses:
  *       200:
  *         description: Успешный вход
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/LoginResponse'
- *       400:
- *         description: Отсутствуют обязательные поля
+ *               $ref: '#/components/schemas/AuthResponse'
  *       401:
  *         description: Неверные учетные данные
  */
@@ -578,34 +655,123 @@ app.post("/api/auth/login", async (req, res) => {
         return res.status(401).json({ error: "Неверные учетные данные" });
     }
 
-    const isValid = await verifyPassword(password, user.passwordHash);
+    if (!user.isActive) {
+        return res.status(403).json({ error: "Аккаунт заблокирован" });
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
         return res.status(401).json({ error: "Неверные учетные данные" });
     }
 
-    // Создание JWT токена
-    const accessToken = jwt.sign(
-        {
-            sub: user.id,
-            email: user.email,
-            first_name: user.first_name,
-            last_name: user.last_name
-        },
-        JWT_SECRET,
-        {
-            expiresIn: ACCESS_EXPIRES_IN
-        }
-    );
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    refreshTokens.add(refreshToken);
+
+    // Устанавливаем refresh token в httpOnly cookie (ПР №10)
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: false, // В продакшене должно быть true с HTTPS
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 дней в миллисекундах
+    });
 
     res.json({
         accessToken,
+        refreshToken, // Также отправляем в теле для поддержки localStorage
         user: {
             id: user.id,
             email: user.email,
             first_name: user.first_name,
-            last_name: user.last_name
+            last_name: user.last_name,
+            role: user.role
         }
     });
+});
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Обновление пары токенов
+ *     tags: [Auth]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Новая пара токенов
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Недействительный refresh token
+ */
+app.post("/api/auth/refresh", (req, res) => {
+    // Пытаемся получить токен из тела запроса или из cookies
+    const { refreshToken } = req.body;
+    const cookieToken = req.cookies?.refreshToken;
+    const token = refreshToken || cookieToken;
+
+    if (!token) {
+        return res.status(400).json({ error: "refreshToken is required" });
+    }
+
+    if (!refreshTokens.has(token)) {
+        return res.status(401).json({ error: "Invalid refresh token" });
+    }
+
+    try {
+        const payload = jwt.verify(token, REFRESH_SECRET);
+
+        const user = findUserById(payload.sub);
+        if (!user) {
+            return res.status(401).json({ error: "User not found" });
+        }
+
+        if (!user.isActive) {
+            return res.status(403).json({ error: "Account is blocked" });
+        }
+
+        // Ротация refresh-токена (удаляем старый, создаем новый)
+        refreshTokens.delete(token);
+
+        const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
+
+        refreshTokens.add(newRefreshToken);
+
+        // Обновляем cookie
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        res.json({
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                role: user.role
+            }
+        });
+    } catch (err) {
+        // Если токен недействителен, удаляем его из хранилища
+        refreshTokens.delete(token);
+        return res.status(401).json({ error: "Invalid or expired refresh token" });
+    }
 });
 
 /**
@@ -619,37 +785,174 @@ app.post("/api/auth/login", async (req, res) => {
  *     responses:
  *       200:
  *         description: Данные пользователя
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UserResponse'
  *       401:
  *         description: Не авторизован
  */
 app.get("/api/auth/me", authMiddleware, (req, res) => {
     const userId = req.user.sub;
-    const user = findUserById(userId, res);
-    if (!user) return;
+    const user = findUserById(userId);
+    
+    if (!user) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+    }
 
     res.json({
         id: user.id,
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
+        role: user.role,
         created_at: user.created_at
     });
 });
 
 // =========================================
-// Публичные маршруты (Products - только GET)
+// Маршруты для управления пользователями (только админ)
+// =========================================
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Получить список пользователей (только админ)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Список пользователей
+ *       403:
+ *         description: Доступ запрещен
+ */
+app.get("/api/users", authMiddleware, roleMiddleware(['admin']), (req, res) => {
+    const userList = users.map(({ passwordHash, ...user }) => user);
+    res.json(userList);
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: Получить пользователя по ID (только админ)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Данные пользователя
+ *       404:
+ *         description: Пользователь не найден
+ */
+app.get("/api/users/:id", authMiddleware, roleMiddleware(['admin']), (req, res) => {
+    const user = users.find(u => u.id === req.params.id);
+    if (!user) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+    }
+    const { passwordHash, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: Обновить информацию пользователя (только админ)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [user, seller, admin]
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Пользователь обновлен
+ *       404:
+ *         description: Пользователь не найден
+ */
+app.put("/api/users/:id", authMiddleware, roleMiddleware(['admin']), async (req, res) => {
+    const user = users.find(u => u.id === req.params.id);
+    if (!user) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    const { first_name, last_name, role, isActive } = req.body;
+
+    if (first_name !== undefined) user.first_name = first_name.trim();
+    if (last_name !== undefined) user.last_name = last_name.trim();
+    if (role !== undefined && ['user', 'seller', 'admin'].includes(role)) {
+        user.role = role;
+    }
+    if (isActive !== undefined) user.isActive = isActive;
+
+    const { passwordHash, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: Заблокировать пользователя (только админ)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Пользователь заблокирован
+ *       404:
+ *         description: Пользователь не найден
+ */
+app.delete("/api/users/:id", authMiddleware, roleMiddleware(['admin']), (req, res) => {
+    const user = users.find(u => u.id === req.params.id);
+    if (!user) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    user.isActive = false;
+    res.json({ message: "Пользователь заблокирован" });
+});
+
+// =========================================
+// Публичные маршруты для товаров (доступны всем)
 // =========================================
 
 /**
  * @swagger
  * /api/categories:
  *   get:
- *     summary: Получить все категории
- *     tags: [Categories]
+ *     summary: Получить все категории (доступно всем)
+ *     tags: [Products]
  *     responses:
  *       200:
  *         description: Список категорий
@@ -663,7 +966,7 @@ app.get('/api/categories', (req, res) => {
  * @swagger
  * /api/products:
  *   get:
- *     summary: Получить все товары (публично)
+ *     summary: Получить все товары (доступно всем)
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -674,7 +977,6 @@ app.get('/api/categories', (req, res) => {
  *         name: inStock
  *         schema:
  *           type: string
- *           enum: [true, false]
  *     responses:
  *       200:
  *         description: Список товаров
@@ -694,28 +996,19 @@ app.get('/api/products', (req, res) => {
     
     res.json({
         count: filteredProducts.length,
-        products: filteredProducts.map(p => ({
-            id: p.id,
-            title: p.title,
-            category: p.category,
-            description: p.description,
-            price: p.price,
-            stock: p.stock,
-            rating: p.rating,
-            image: p.image
-        }))
+        products: filteredProducts
     });
 });
 
 // =========================================
-// Защищенные маршруты (требуют аутентификации)
+// Защищенные маршруты для товаров (требуют аутентификации и ролей)
 // =========================================
 
 /**
  * @swagger
  * /api/products:
  *   post:
- *     summary: Создать новый товар (только для авторизованных)
+ *     summary: Создать новый товар (продавец и админ)
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -724,37 +1017,14 @@ app.get('/api/products', (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - title
- *               - price
- *               - category
- *             properties:
- *               title:
- *                 type: string
- *               category:
- *                 type: string
- *               description:
- *                 type: string
- *               price:
- *                 type: number
- *               stock:
- *                 type: integer
- *               rating:
- *                 type: number
- *               image:
- *                 type: string
+ *             $ref: '#/components/schemas/Product'
  *     responses:
  *       201:
  *         description: Товар создан
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Product'
- *       401:
- *         description: Не авторизован
+ *       403:
+ *         description: Доступ запрещен
  */
-app.post('/api/products', authMiddleware, (req, res) => {
+app.post('/api/products', authMiddleware, roleMiddleware(['seller', 'admin']), (req, res) => {
     const { title, category, description, price, stock, rating, image } = req.body;
     
     if (!title || !price || !category) {
@@ -769,7 +1039,9 @@ app.post('/api/products', authMiddleware, (req, res) => {
         price: Number(price),
         stock: Number(stock) || 0,
         rating: Number(rating) || 0,
-        image: image || 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7311182222.jpg'
+        image: image || 'https://cdn1.ozone.ru/s3/multimedia-1-2/c600/7311182222.jpg',
+        createdBy: req.user.email,
+        createdAt: new Date().toISOString()
     };
     
     products.push(newProduct);
@@ -780,10 +1052,8 @@ app.post('/api/products', authMiddleware, (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   get:
- *     summary: Получить товар по ID (требует авторизации)
+ *     summary: Получить товар по ID (доступно всем)
  *     tags: [Products]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -793,19 +1063,17 @@ app.post('/api/products', authMiddleware, (req, res) => {
  *     responses:
  *       200:
  *         description: Детальная информация о товаре
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Product'
- *       401:
- *         description: Не авторизован
  *       404:
  *         description: Товар не найден
  */
-app.get('/api/products/:id', authMiddleware, (req, res) => {
+app.get('/api/products/:id', (req, res) => {
     const productId = req.params.id;
-    const product = findProductOr404(productId, res);
-    if (!product) return;
+    const product = products.find(p => p.id == productId);
+    
+    if (!product) {
+        return res.status(404).json({ error: "Товар не найден" });
+    }
+    
     res.json(product);
 });
 
@@ -813,7 +1081,7 @@ app.get('/api/products/:id', authMiddleware, (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   put:
- *     summary: Полностью обновить товар (требует авторизации)
+ *     summary: Обновить товар (продавец и админ)
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -831,20 +1099,22 @@ app.get('/api/products/:id', authMiddleware, (req, res) => {
  *             $ref: '#/components/schemas/Product'
  *     responses:
  *       200:
- *         description: Обновленный товар
- *       401:
- *         description: Не авторизован
+ *         description: Товар обновлен
+ *       403:
+ *         description: Доступ запрещен
  *       404:
  *         description: Товар не найден
  */
-app.put('/api/products/:id', authMiddleware, (req, res) => {
+app.put('/api/products/:id', authMiddleware, roleMiddleware(['seller', 'admin']), (req, res) => {
     const productId = req.params.id;
-    const product = findProductOr404(productId, res);
-    if (!product) return;
+    const product = products.find(p => p.id == productId);
+    
+    if (!product) {
+        return res.status(404).json({ error: "Товар не найден" });
+    }
     
     const { title, category, description, price, stock, rating, image } = req.body;
     
-    // PUT требует все поля
     if (!title || !category || !price) {
         return res.status(400).json({ error: "Все поля обязательны для PUT запроса" });
     }
@@ -864,7 +1134,7 @@ app.put('/api/products/:id', authMiddleware, (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   delete:
- *     summary: Удалить товар (требует авторизации)
+ *     summary: Удалить товар (только админ)
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -877,18 +1147,20 @@ app.put('/api/products/:id', authMiddleware, (req, res) => {
  *     responses:
  *       204:
  *         description: Товар удален
- *       401:
- *         description: Не авторизован
+ *       403:
+ *         description: Доступ запрещен
  *       404:
  *         description: Товар не найден
  */
-app.delete('/api/products/:id', authMiddleware, (req, res) => {
+app.delete('/api/products/:id', authMiddleware, roleMiddleware(['admin']), (req, res) => {
     const productId = req.params.id;
     
-    const exists = products.some(p => p.id === productId);
-    if (!exists) return res.status(404).json({ error: "Товар не найден" });
+    const index = products.findIndex(p => p.id === productId);
+    if (index === -1) {
+        return res.status(404).json({ error: "Товар не найден" });
+    }
     
-    products = products.filter(p => p.id !== productId);
+    products.splice(index, 1);
     res.status(204).send();
 });
 
@@ -908,25 +1180,33 @@ app.use((err, req, res, next) => {
 // Запуск сервера
 // =========================================
 app.listen(port, () => {
-    console.log('\n' + '='.repeat(70));
-    console.log('✅ TECHSTORE API С АУТЕНТИФИКАЦИЕЙ ЗАПУЩЕН!');
-    console.log('='.repeat(70));
+    console.log('\n' + '='.repeat(80));
+    console.log('✅ TECHSTORE API С РОЛЕВОЙ МОДЕЛЬЮ (RBAC) ЗАПУЩЕН!');
+    console.log('='.repeat(80));
     console.log(`📡 Адрес: http://localhost:${port}`);
     console.log(`📚 Swagger UI: http://localhost:${port}/api-docs`);
     console.log(`👥 Пользователей: ${users.length}`);
     console.log(`📦 Товаров: ${products.length}`);
-    console.log('='.repeat(70));
-    console.log('🔓 Публичные маршруты:');
+    console.log('='.repeat(80));
+    console.log('🔓 Публичные маршруты (доступны всем):');
     console.log(`   POST   /api/auth/register - регистрация`);
     console.log(`   POST   /api/auth/login - вход`);
+    console.log(`   POST   /api/auth/refresh - обновление токенов`);
     console.log(`   GET    /api/products - все товары`);
     console.log(`   GET    /api/categories - категории`);
-    console.log('='.repeat(70));
-    console.log('🔒 Защищенные маршруты (требуют Bearer токен):');
-    console.log(`   GET    /api/auth/me - профиль`);
+    console.log('='.repeat(80));
+    console.log('🔒 Защищенные маршруты (требуют аутентификации):');
+    console.log(`   GET    /api/auth/me - профиль (любой)`);
+    console.log('='.repeat(80));
+    console.log('👑 Продавец и админ:');
     console.log(`   POST   /api/products - создать товар`);
-    console.log(`   GET    /api/products/:id - товар по ID`);
     console.log(`   PUT    /api/products/:id - обновить товар`);
+    console.log('='.repeat(80));
+    console.log('👑 Только администратор:');
+    console.log(`   GET    /api/users - список пользователей`);
+    console.log(`   GET    /api/users/:id - пользователь по ID`);
+    console.log(`   PUT    /api/users/:id - обновить пользователя`);
+    console.log(`   DELETE /api/users/:id - заблокировать пользователя`);
     console.log(`   DELETE /api/products/:id - удалить товар`);
-    console.log('='.repeat(70));
+    console.log('='.repeat(80));
 });

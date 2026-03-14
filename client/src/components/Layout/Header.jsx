@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Layout.scss';
 
 const Header = () => {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated, logout, hasRole } = useAuth(); // Добавлены isAuthenticated и hasRole
     const navigate = useNavigate();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
@@ -31,7 +31,12 @@ const Header = () => {
                 <nav className="nav">
                     <Link to="/" className="nav__link">Каталог</Link>
                     {isAuthenticated && (
-                        <Link to="/profile" className="nav__link">Профиль</Link>
+                        <>
+                            <Link to="/profile" className="nav__link">Профиль</Link>
+                            {hasRole('admin') && (
+                                <Link to="/admin" className="nav__link">Админ панель</Link>
+                            )}
+                        </>
                     )}
                 </nav>
 

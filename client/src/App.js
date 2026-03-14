@@ -8,6 +8,7 @@ import ProductsPage from './pages/ProductsPage/ProductsPage';
 import AuthPage from './pages/AuthPage/AuthPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import CartPage from './pages/CartPage/CartPage';
+import AdminPage from './pages/AdminPage/AdminPage';
 import './App.css';
 
 function App() {
@@ -31,6 +32,14 @@ function App() {
                                 element={
                                     <ProtectedRoute>
                                         <ProfilePage />
+                                    </ProtectedRoute>
+                                } 
+                            />
+                            <Route 
+                                path="/admin" 
+                                element={
+                                    <ProtectedRoute adminOnly>
+                                        <AdminPage />
                                     </ProtectedRoute>
                                 } 
                             />

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { api } from '../api';
 
 const AuthContext = createContext();
@@ -14,17 +14,9 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(localStorage.getItem('token'));
 
-    useEffect(() => {
-        if (token) {
-            loadUser();
-        } else {
-            setLoading(false);
-        }
-    }, [token]);
-
-    const loadUser = async () => {
+    // Используем useCallback для мемоизации функции
+    const loadUser = useCallback(async () => {
         try {
             const userData = await api.getCurrentUser();
             setUser(userData);
@@ -32,23 +24,31 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Ошибка загрузки пользователя:', error);
             logout();
-        } finally {
-            setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        // Загружаем пользователя из localStorage при старте
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+        setLoading(false);
+    }, []);
+
+    useEffect(() => {
+        // Если есть токен, проверяем его валидность
+        const token = localStorage.getItem('accessToken');
+        if (token && !user) {
+            loadUser();
+        }
+    }, [user, loadUser]); // Добавлены зависимости
 
     const login = async (email, password) => {
         try {
-            const data = await api.login(email, password);
-            
-            // Сохраняем токен и пользователя
-            localStorage.setItem('token', data.accessToken);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            
-            setToken(data.accessToken);
-            setUser(data.user);
-            
-            return { success: true, data };
+            const response = await api.login(email, password);
+            setUser(response.user);
+            return { success: true, data: response };
         } catch (error) {
             return { 
                 success: false, 
@@ -59,8 +59,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (userData) => {
         try {
-            const data = await api.register(userData);
-            
+            await api.register(userData);
             // После регистрации сразу входим
             return await login(userData.email, userData.password);
         } catch (error) {
@@ -72,10 +71,16 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setToken(null);
+        api.logout();
         setUser(null);
+    };
+
+    const hasRole = (roles) => {
+        if (!user) return false;
+        if (Array.isArray(roles)) {
+            return roles.includes(user.role);
+        }
+        return user.role === roles;
     };
 
     const value = {
@@ -84,7 +89,10 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        isAuthenticated: !!user
+        hasRole,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+        isSeller: user?.role === 'seller' || user?.role === 'admin'
     };
 
     return (
