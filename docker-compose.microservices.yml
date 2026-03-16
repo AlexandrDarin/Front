@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: techstore_gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - auth-service
+      - product-service
+      - order-service
+      - payment-service
+      - chat-service
+    networks:
+      - techstore_network
+
+  # Сервис аутентификации
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: techstore_auth
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_NAME: techstore_auth
+      ACCESS_SECRET: ${ACCESS_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techstore_network
+
+  # Сервис товаров
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: techstore_products
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_NAME: techstore_products
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techstore_network
+
+  # Сервис заказов
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: techstore_orders
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_NAME: techstore_orders
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techstore_network
+
+  # Сервис оплаты
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: techstore_payments
+    environment:
+      NODE_ENV: production
+      YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID}
+      YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY}
+    depends_on:
+      - order-service
+    networks:
+      - techstore_network
+
+  # Сервис чата (WebSocket)
+  chat-service:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    container_name: techstore_chat
+    environment:
+      NODE_ENV: production
+      ACCESS_SECRET: ${ACCESS_SECRET}
+    depends_on:
+      - postgres
+    networks:
+      - techstore_network
+
+  # PostgreSQL (общая БД с разными схемами)
+  postgres:
+    image: postgres:15-alpine
+    container_name: techstore_postgres
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: techstore
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-microservices.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - techstore_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis для кэширования и сессий
+  redis:
+    image: redis:alpine
+    container_name: techstore_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - techstore_network
+
+  # Фронтенд
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.frontend
+    container_name: techstore_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - techstore_network
+
+networks:
+  techstore_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

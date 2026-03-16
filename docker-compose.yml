@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: techstore_postgres
+    environment:
+      POSTGRES_DB: techstore
+      POSTGRES_USER: techstore_user
+      POSTGRES_PASSWORD: techstore_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - techstore_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U techstore_user -d techstore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Бэкенд (Node.js)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: techstore_backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: techstore
+      DB_USER: techstore_user
+      DB_PASSWORD: techstore_password
+      ACCESS_SECRET: techstore_access_secret_2026_prod
+      REFRESH_SECRET: techstore_refresh_secret_2026_prod
+      CORS_ORIGIN: http://localhost,http://localhost:80,http://frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techstore_network
+    restart: unless-stopped
+    volumes:
+      - ./uploads:/app/uploads
+
+  # Фронтенд (React + Nginx)
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.frontend
+    container_name: techstore_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - techstore_network
+    restart: unless-stopped
+
+  # Adminer для управления БД (опционально)
+  adminer:
+    image: adminer
+    container_name: techstore_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - techstore_network
+    restart: unless-stopped
+
+networks:
+  techstore_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

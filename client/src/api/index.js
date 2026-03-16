@@ -8,7 +8,7 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
-    withCredentials: true // Для отправки cookies
+    withCredentials: true
 });
 
 // Переменная для хранения состояния обновления токена
@@ -26,7 +26,7 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
-// Интерцептор для добавления access токена к каждому запросу
+// Интерцептор для добавления access токена
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('accessToken');
@@ -40,18 +40,16 @@ apiClient.interceptors.request.use(
     }
 );
 
-// Интерцептор для обработки ошибок и обновления токена
+// Интерцептор для обработки ошибок
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Если ошибка не 401 или запрос уже повторялся
         if (error.response?.status !== 401 || originalRequest._retry) {
             return Promise.reject(error);
         }
 
-        // Если это запрос на обновление токена и он тоже失败了
         if (originalRequest.url === '/auth/refresh') {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
@@ -61,7 +59,6 @@ apiClient.interceptors.response.use(
         }
 
         if (isRefreshing) {
-            // Если уже идет обновление, добавляем запрос в очередь
             return new Promise((resolve, reject) => {
                 failedQueue.push({ resolve, reject });
             })
@@ -80,7 +77,6 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
 
         if (!refreshToken) {
-            // Нет refresh токена - перенаправляем на логин
             localStorage.removeItem('accessToken');
             localStorage.removeItem('user');
             window.location.href = '/login';
@@ -89,7 +85,6 @@ apiClient.interceptors.response.use(
         }
 
         try {
-            // Пытаемся обновить токены
             const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
             
             const { accessToken, refreshToken: newRefreshToken, user } = response.data;
@@ -98,16 +93,12 @@ apiClient.interceptors.response.use(
             localStorage.setItem('refreshToken', newRefreshToken);
             localStorage.setItem('user', JSON.stringify(user));
 
-            // Обновляем заголовок для оригинального запроса
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             
-            // Обрабатываем очередь
             processQueue(null, accessToken);
             
-            // Повторяем оригинальный запрос
             return apiClient(originalRequest);
         } catch (refreshError) {
-            // Не удалось обновить токен
             processQueue(refreshError, null);
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
@@ -129,7 +120,6 @@ export const api = {
 
     login: async (email, password) => {
         const response = await apiClient.post('/auth/login', { email, password });
-        // Сохраняем токены
         if (response.data.accessToken) {
             localStorage.setItem('accessToken', response.data.accessToken);
         }
@@ -215,6 +205,33 @@ export const api = {
 
     deleteProduct: async (id) => {
         const response = await apiClient.delete(`/products/${id}`);
+        return response.data;
+    },
+
+    // ========== Заказы ==========
+    getOrders: async (limit = 10, offset = 0) => {
+        const response = await apiClient.get(`/orders?limit=${limit}&offset=${offset}`);
+        return response.data;
+    },
+
+    getOrderById: async (id) => {
+        const response = await apiClient.get(`/orders/${id}`);
+        return response.data;
+    },
+
+    createOrder: async (orderData) => {
+        const response = await apiClient.post('/orders', orderData);
+        return response.data;
+    },
+
+    // ========== Платежи ==========
+    createPayment: async (orderId, returnUrl) => {
+        const response = await apiClient.post('/payments/create', { order_id: orderId, return_url: returnUrl });
+        return response.data;
+    },
+
+    getPaymentStatus: async (paymentId) => {
+        const response = await apiClient.get(`/payments/${paymentId}`);
         return response.data;
     }
 };
