@@ -1,42 +1,34 @@
-import React from 'react';
-import './Layout.scss';
+﻿import React from 'react';
+import { Link } from 'react-router-dom';
+import './Footer.scss';
 
 const Footer = () => {
-    return (
-        <footer className="footer">
-            <div className="footer__inner">
-                <div className="footer__grid">
-                    <div className="footer__col">
-                        <h4>TechStore</h4>
-                        <ul>
-                            <li>О компании</li>
-                            <li>Контакты</li>
-                            <li>Вакансии</li>
-                        </ul>
-                    </div>
-                    <div className="footer__col">
-                        <h4>Покупателям</h4>
-                        <ul>
-                            <li>Доставка</li>
-                            <li>Оплата</li>
-                            <li>Гарантия</li>
-                        </ul>
-                    </div>
-                    <div className="footer__col">
-                        <h4>Мы в соцсетях</h4>
-                        <ul>
-                            <li>Telegram</li>
-                            <li>VK</li>
-                            <li>YouTube</li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="footer__bottom">
-                    © {new Date().getFullYear()} TechStore. Все права защищены.
-                </div>
-            </div>
-        </footer>
-    );
+  return (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-content">
+          <div className="footer-section">
+            <h4>TechStore</h4>
+            <p>Современные технологии для вашего дома</p>
+          </div>
+          <div className="footer-section">
+            <h4>Контакты</h4>
+            <p>Email: info@techstore.ru</p>
+            <p>Телефон: +7 (999) 123-45-67</p>
+          </div>
+          <div className="footer-section">
+            <h4>Информация</h4>
+            <Link to="/about">О нас</Link>
+            <Link to="/delivery">Доставка</Link>
+            <Link to="/payment">Оплата</Link>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>&copy; 2026 TechStore. Все права защищены.</p>
+        </div>
+      </div>
+    </footer>
+  );
 };
 
 export default Footer;

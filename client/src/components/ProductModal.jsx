@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Button from './UI/Button';
 import Input from './UI/Input';
 import './ProductModal.scss';
@@ -10,7 +10,8 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product, categories }) => {
     description: '',
     price: '',
     stock: '',
-    rating: ''
+    rating: '',
+    image: ''
   });
 
   useEffect(() => {
@@ -21,7 +22,8 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product, categories }) => {
         description: product.description || '',
         price: product.price?.toString() || '',
         stock: product.stock?.toString() || '',
-        rating: product.rating?.toString() || ''
+        rating: product.rating?.toString() || '',
+        image: product.image || ''
       });
     } else {
       setFormData({
@@ -30,7 +32,8 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product, categories }) => {
         description: '',
         price: '',
         stock: '',
-        rating: ''
+        rating: '',
+        image: ''
       });
     }
   }, [product]);
@@ -79,6 +82,13 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product, categories }) => {
               onChange={(e) => setFormData({...formData, title: e.target.value})}
               placeholder="Например, iPhone 15 Pro"
               required
+            />
+            
+            <Input
+              label="URL изображения"
+              value={formData.image}
+              onChange={(e) => setFormData({...formData, image: e.target.value})}
+              placeholder="https://example.com/image.jpg"
             />
             
             <div className="form-group">

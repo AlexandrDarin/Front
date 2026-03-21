@@ -144,12 +144,11 @@ body {
 .brand {
   font-size: 28px;
   font-weight: 800;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, $neon-blue, $neon-purple);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
+  background-clip: text;
+ -webkit-text-fill-color: transparent;
 }
-
 .search {
   flex: 1;
   max-width: 400px;

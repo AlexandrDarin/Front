@@ -8,8 +8,9 @@ COPY package*.json ./
 # Устанавливаем зависимости
 RUN npm install
 
-# Копируем исходный код (только нужные папки)
+# Копируем исходный код
 COPY server.js ./
+COPY swagger.js ./
 COPY models ./models
 COPY services ./services
 

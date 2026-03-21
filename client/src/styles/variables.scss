@@ -1,0 +1,114 @@
+// =========================================
+// ПЕРЕМЕННЫЕ
+// =========================================
+
+// Светлая тема
+$light-bg: #f8fafc;
+$light-surface: #ffffff;
+$light-text: #0f172a;
+$light-text-secondary: #475569;
+$light-border: rgba(0, 0, 0, 0.08);
+$light-primary: #4361ee;
+$light-primary-light: #e0e7ff;
+$light-secondary: #8b5cf6;
+$light-success: #10b981;
+$light-danger: #ef4444;
+$light-warning: #f59e0b;
+$light-glow: rgba(67, 97, 238, 0.3);
+$light-card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1), 0 10px 20px -10px rgba(0, 0, 0, 0.05);
+
+// Тёмная тема
+$dark-bg: #0a0c10;
+$dark-surface: #111827;
+$dark-text: #f3f4f6;
+$dark-text-secondary: #9ca3af;
+$dark-border: rgba(255, 255, 255, 0.08);
+$dark-primary: #60a5fa;
+$dark-primary-light: #1e293b;
+$dark-secondary: #a78bfa;
+$dark-success: #34d399;
+$dark-danger: #f87171;
+$dark-warning: #fbbf24;
+$dark-glow: rgba(96, 165, 250, 0.3);
+$dark-card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 10px 20px -10px rgba(0, 0, 0, 0.3);
+
+// Неоновые цвета
+$neon-blue: #4361ee;
+$neon-purple: #8b5cf6;
+$neon-pink: #ec4899;
+$neon-cyan: #06b6d4;
+
+// =========================================
+// МИКСИНЫ
+// =========================================
+
+@mixin theme-aware($property, $light-value, $dark-value) {
+  #{$property}: $light-value;
+  [data-theme="dark"] & {
+    #{$property}: $dark-value;
+  }
+}
+
+@mixin glass-effect {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@mixin gradient-border($color1, $color2) {
+  position: relative;
+  border: double 1px transparent;
+  border-radius: 16px;
+  background-image: linear-gradient(var(--bg), var(--bg)), 
+                    linear-gradient(135deg, $color1, $color2);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+@mixin neon-glow($color) {
+  box-shadow: 0 0 10px rgba($color, 0.3),
+              0 0 20px rgba($color, 0.2),
+              0 0 30px rgba($color, 0.1);
+}
+
+// =========================================
+// АНИМАЦИИ
+// =========================================
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  20% { left: 100%; }
+  100% { left: 100%; }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
